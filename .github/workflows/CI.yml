@@ -15,7 +15,7 @@ env:
   BINARY: 'cli'
   GO_VERSION: '1.18'
   BUILD_PATH: './cmd/cli'
-  DOCKER_IMAGE_NAME: 'ghstahl/cobra_starter'
+  DOCKER_IMAGE_NAME: 'ghstahl/crypto-gen'
   
 jobs:
   pre_flight:

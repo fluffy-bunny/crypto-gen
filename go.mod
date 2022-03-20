@@ -1,4 +1,4 @@
-module cobra_starter
+module crypto_gen
 
 go 1.18
 

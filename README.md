@@ -1,6 +1,6 @@
 # cobra-starter
 
 ```bash
-docker run ghstahl/cobra_starter 
-docker run ghstahl/cobra_starter version
+docker run ghstahl/crypto_gen 
+docker run ghstahl/crypto_gen version
 ```

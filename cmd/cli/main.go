@@ -5,8 +5,8 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package main
 
 import (
-	"cobra_starter/cmd/cli/cmd"
-	"cobra_starter/cmd/cli/shared"
+	"crypto_gen/cmd/cli/cmd"
+	"crypto_gen/cmd/cli/shared"
 )
 
 func main() {

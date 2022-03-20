@@ -7,8 +7,8 @@ package cmd
 import (
 	"os"
 
-	"cobra_starter/cmd/cli/cmd/about"
-	"cobra_starter/cmd/cli/cmd/version"
+	"crypto_gen/cmd/cli/cmd/about"
+	"crypto_gen/cmd/cli/cmd/version"
 
 	"github.com/spf13/cobra"
 )
