@@ -13,6 +13,6 @@ DOCKER_HUB_ACCESS_TOKEN={{ your dockerhub access_token}}
 ## Docker
 
 ```bash
-docker run ghstahl/crypto_gen 
-docker run ghstahl/crypto_gen version
+docker run ghstahl/crypto-gen 
+docker run ghstahl/crypto-gen version
 ```
