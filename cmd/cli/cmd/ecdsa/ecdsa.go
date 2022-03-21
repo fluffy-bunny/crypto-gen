@@ -83,15 +83,19 @@ docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_a
 		if err != nil {
 			return err
 		}
+		kid := strings.ReplaceAll(uuid.New().String(), "-", "")
 		publicKey := &privateKey.PublicKey
 
-		kid := strings.ReplaceAll(uuid.New().String(), "-", "")
+		priv := jose.JSONWebKey{Key: privateKey, KeyID: kid, Algorithm: string(jose.ES256), Use: "sig"}
+		privJS, err := priv.MarshalJSON()
+		var mapPrivateJWK map[string]interface{}
+		json.Unmarshal(privJS, &mapPrivateJWK)
+
 		pub := jose.JSONWebKey{Key: publicKey, KeyID: kid, Algorithm: string(jose.ES256), Use: "sig"}
 		pubJS, err := pub.MarshalJSON()
 		var mapJWK map[string]interface{}
 		json.Unmarshal(pubJS, &mapJWK)
 
-		fmt.Println(string(pubJS))
 		keySet := shared.EcdsaKeySet{
 			KID:        kid,
 			Password:   shared.Password,
@@ -99,7 +103,8 @@ docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_a
 			PublicKey:  publicEncoded,
 			NotBefore:  shared.TimeNotBefore.Format(time.RFC3339),
 			NotAfter:   shared.TimeNotAfter.Format(time.RFC3339),
-			JWK:        mapJWK,
+			PublicJWK:  mapJWK,
+			PrivateJWK: mapPrivateJWK,
 		}
 		fmt.Println(utils.PrettyJSON(keySet))
 		return nil

@@ -18,6 +18,7 @@ type (
 		NotAfter   string                 `json:"not_after"`
 		Password   string                 `json:"password"`
 		KID        string                 `json:"kid"`
-		JWK        map[string]interface{} `json:"jwk"`
+		PublicJWK  map[string]interface{} `json:"public_jwk"`
+		PrivateJWK map[string]interface{} `json:"private_jwk"`
 	}
 )

@@ -5,6 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package rotation
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
+	"github.com/square/go-jose"
 )
 
 const (
@@ -58,17 +60,28 @@ docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2022-01-01Z" --p
 	`,
 	PersistentPreRunE: cobra_utils.ParentPersistentPreRunE,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, privateEncoded, publicEncoded, err := ecdsa.GenerateECDSAPublicPrivateKeySet(shared.Password)
-		if err != nil {
-			return err
-		}
 
 		var keySets []shared.EcdsaKeySet
 		currentNotBefore := shared.TimeNotBefore
 		for i := 0; i < int(count); i++ {
+			privateKey, privateEncoded, publicEncoded, err := ecdsa.GenerateECDSAPublicPrivateKeySet(shared.Password)
+			if err != nil {
+				return err
+			}
 			notBefore := currentNotBefore
 			notAfter := AddMonth(notBefore, int(keyDurationMonths))
 			kid := strings.ReplaceAll(uuid.New().String(), "-", "")
+			publicKey := &privateKey.PublicKey
+
+			priv := jose.JSONWebKey{Key: privateKey, KeyID: kid, Algorithm: string(jose.ES256), Use: "sig"}
+			privJS, err := priv.MarshalJSON()
+			var mapPrivateJWK map[string]interface{}
+			json.Unmarshal(privJS, &mapPrivateJWK)
+
+			pub := jose.JSONWebKey{Key: publicKey, KeyID: kid, Algorithm: string(jose.ES256), Use: "sig"}
+			pubJS, err := pub.MarshalJSON()
+			var mapPublicJWK map[string]interface{}
+			json.Unmarshal(pubJS, &mapPublicJWK)
 			keySets = append(keySets, shared.EcdsaKeySet{
 				KID:        kid,
 				Password:   shared.Password,
@@ -76,6 +89,8 @@ docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2022-01-01Z" --p
 				PublicKey:  publicEncoded,
 				NotBefore:  notBefore.Format(time.RFC3339),
 				NotAfter:   notAfter.Format(time.RFC3339),
+				PublicJWK:  mapPublicJWK,
+				PrivateJWK: mapPrivateJWK,
 			})
 			currentNotBefore = AddMonth(notAfter, int(0-overlapMonths))
 		}
