@@ -5,6 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package ecdsa
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -19,6 +20,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/square/go-jose"
 	"github.com/tkuchiki/parsetime"
 )
 
@@ -77,11 +79,19 @@ docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_a
 	},
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, privateEncoded, publicEncoded, err := ecdsa.GenerateECDSAPublicPrivateKeySet(shared.Password)
+		privateKey, privateEncoded, publicEncoded, err := ecdsa.GenerateECDSAPublicPrivateKeySet(shared.Password)
 		if err != nil {
 			return err
 		}
+		publicKey := &privateKey.PublicKey
+
 		kid := strings.ReplaceAll(uuid.New().String(), "-", "")
+		pub := jose.JSONWebKey{Key: publicKey, KeyID: kid, Algorithm: string(jose.ES256), Use: "sig"}
+		pubJS, err := pub.MarshalJSON()
+		var mapJWK map[string]interface{}
+		json.Unmarshal(pubJS, &mapJWK)
+
+		fmt.Println(string(pubJS))
 		keySet := shared.EcdsaKeySet{
 			KID:        kid,
 			Password:   shared.Password,
@@ -89,6 +99,7 @@ docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_a
 			PublicKey:  publicEncoded,
 			NotBefore:  shared.TimeNotBefore.Format(time.RFC3339),
 			NotAfter:   shared.TimeNotAfter.Format(time.RFC3339),
+			JWK:        mapJWK,
 		}
 		fmt.Println(utils.PrettyJSON(keySet))
 		return nil
