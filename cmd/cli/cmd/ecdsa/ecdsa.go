@@ -36,7 +36,22 @@ var (
 var command = &cobra.Command{
 	Use:   "ecdsa",
 	Short: "generate ecdsa keys",
-	Long:  ``,
+	Long: `
+docker run ghstahl/crypto-gen version
+
+Generate a single ECDSA key
+-------------------------------------------------------
+docker run ghstahl/crypto-gen ecdsa 
+docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02T15:04:05Z" --time_not_after="2007-01-02T15:04:05Z" --password="Tricycle2-Hazing-Illusion"
+docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_after="2007-01-02Z" --password="Tricycle2-Hazing-Illusion"
+
+{
+    "private_key": "-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-256-CBC,94256fd7bcfa6a3e78262200b8cbd9ca\n\nxouwLPx0XF6b48haUc64HgSdCKV0Uo5qKZoiXUcf2QW1m12IofAOSR3reU5UYPop\nV8YITld40NSNKNzlmeEUPthJAkfDO6jGBG2mGlMg5HNFBwZBMDIOL0joCEf3qgBX\nDUlUmm0LBFdFq9wDsBLPdDfzsmmFqrl3YCoIdW11wpU=\n-----END EC PRIVATE KEY-----\n",
+    "public_key": "-----BEGIN EC  PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEs1PHWA8LHErGe0RZC0YC8Jr5apxi\naFbxZ7AlrELr3ts1xWQBZMVSJ6y7TM1U3DPo96FhUSaMqY3bas8h3DLlgw==\n-----END EC  PUBLIC KEY-----\n",
+    "not_before": "2006-01-02T00:00:00Z",
+    "not_after": "0001-01-01T00:00:00Z"
+}
+`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		err := cobra_utils.ParentPersistentPreRunE(cmd, args)
 		if err != nil {
@@ -64,13 +79,9 @@ var command = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		type ecdsaKeySet struct {
-			PrivateKey string `json:"private_key"`
-			PublicKey  string `json:"public_key"`
-			NotBefore  string `json:"not_before"`
-			NotAfter   string `json:"not_after"`
-		}
-		keySet := ecdsaKeySet{
+
+		keySet := shared.EcdsaKeySet{
+			Password:   shared.Password,
 			PrivateKey: privateEncoded,
 			PublicKey:  publicEncoded,
 			NotBefore:  shared.TimeNotBefore.Format(time.RFC3339),

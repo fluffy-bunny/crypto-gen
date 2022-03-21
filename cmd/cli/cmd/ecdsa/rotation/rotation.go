@@ -30,27 +30,44 @@ var (
 
 // aboutCmd represents the about command
 var command = &cobra.Command{
-	Use:               "rotation",
-	Short:             "generate ecdsa key rotation set",
-	Long:              ``,
+	Use:   "rotation",
+	Short: "generate ecdsa key rotation set",
+	Long: `
+Generate a ECDSA key rotation set
+-------------------------------------------------------
+docker run ghstahl/crypto-gen ecdsa rotation
+docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2022-01-01Z" --password="Tricycle2-Hazing-Illusion"
+docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2022-01-01Z" --password="Tricycle2-Hazing-Illusion" --key_duration_months=12 --overlap_months=1 --count=2
+
+[
+{
+	"private_key": "-----BEGIN EC PRIVATE KEY-----\n**REDACTED**\n-----END EC PRIVATE KEY-----\n",
+	"public_key": "-----BEGIN EC  PUBLIC KEY-----\n**REDACTED**\n-----END EC  PUBLIC KEY-----\n",
+	"not_before": "2022-01-01T00:00:00Z",
+	"not_after": "2023-01-01T00:00:00Z"
+},
+{
+	"private_key": "-----BEGIN EC PRIVATE KEY-----\n**REDACTED**\n-----END EC PRIVATE KEY-----\n",
+	"public_key": "-----BEGIN EC  PUBLIC KEY-----\n**REDACTED**\n-----END EC  PUBLIC KEY-----\n",
+	"not_before": "2022-12-01T00:00:00Z",
+	"not_after": "2023-12-01T00:00:00Z"
+}
+]	
+	`,
 	PersistentPreRunE: cobra_utils.ParentPersistentPreRunE,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		_, privateEncoded, publicEncoded, err := ecdsa.GenerateECDSAPublicPrivateKeySet(shared.Password)
 		if err != nil {
 			return err
 		}
-		type ecdsaKeySet struct {
-			PrivateKey string `json:"private_key"`
-			PublicKey  string `json:"public_key"`
-			NotBefore  string `json:"not_before"`
-			NotAfter   string `json:"not_after"`
-		}
-		var keySets []ecdsaKeySet
+
+		var keySets []shared.EcdsaKeySet
 		currentNotBefore := shared.TimeNotBefore
 		for i := 0; i < int(count); i++ {
 			notBefore := currentNotBefore
 			notAfter := AddMonth(notBefore, int(keyDurationMonths))
-			keySets = append(keySets, ecdsaKeySet{
+			keySets = append(keySets, shared.EcdsaKeySet{
+				Password:   shared.Password,
 				PrivateKey: privateEncoded,
 				PublicKey:  publicEncoded,
 				NotBefore:  notBefore.Format(time.RFC3339),
