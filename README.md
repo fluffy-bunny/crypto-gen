@@ -1,4 +1,4 @@
-# cobra-starter
+# crypto-gen
 
 ## github actions secrets
 
