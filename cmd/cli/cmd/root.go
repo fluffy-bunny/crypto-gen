@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"crypto_gen/cmd/cli/cmd/about"
+	"crypto_gen/cmd/cli/cmd/ecdsa"
 	"crypto_gen/cmd/cli/cmd/version"
 
 	"github.com/spf13/cobra"
@@ -50,4 +51,5 @@ func init() {
 
 	about.InitCommand(rootCmd)
 	version.InitCommand(rootCmd)
+	ecdsa.InitCommand(rootCmd)
 }
