@@ -6,6 +6,7 @@ package rotation
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"crypto_gen/cmd/cli/cmd/ecdsa/shared"
@@ -13,6 +14,7 @@ import (
 	"crypto_gen/internal/ecdsa"
 	"crypto_gen/internal/utils"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -66,7 +68,9 @@ docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2022-01-01Z" --p
 		for i := 0; i < int(count); i++ {
 			notBefore := currentNotBefore
 			notAfter := AddMonth(notBefore, int(keyDurationMonths))
+			kid := strings.ReplaceAll(uuid.New().String(), "-", "")
 			keySets = append(keySets, shared.EcdsaKeySet{
+				KID:        kid,
 				Password:   shared.Password,
 				PrivateKey: privateEncoded,
 				PublicKey:  publicEncoded,

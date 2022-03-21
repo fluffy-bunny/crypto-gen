@@ -6,6 +6,7 @@ package ecdsa
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"crypto_gen/cmd/cli/cmd/ecdsa/shared"
@@ -15,6 +16,7 @@ import (
 
 	"crypto_gen/cmd/cli/cmd/ecdsa/rotation"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tkuchiki/parsetime"
@@ -79,8 +81,9 @@ docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_a
 		if err != nil {
 			return err
 		}
-
+		kid := strings.ReplaceAll(uuid.New().String(), "-", "")
 		keySet := shared.EcdsaKeySet{
+			KID:        kid,
 			Password:   shared.Password,
 			PrivateKey: privateEncoded,
 			PublicKey:  publicEncoded,

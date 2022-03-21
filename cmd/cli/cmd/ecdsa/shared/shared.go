@@ -17,5 +17,6 @@ type (
 		NotBefore  string `json:"not_before"`
 		NotAfter   string `json:"not_after"`
 		Password   string `json:"password"`
+		KID        string `json:"kid"`
 	}
 )
