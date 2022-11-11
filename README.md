@@ -57,3 +57,5 @@ docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2006-01-02Z" --p
 ## JWT
 
 There is a small [example](internal/jwt/keys_test.go) of minting a JWT and validatig it using these generated keys.  
+I have started using a jwt as a secure way to send out an invite code that I can then verify when it comes back.  Usually I did this by encrypting a JSON string using a symetric key, then URL encoding it.  A JWT does the same thing except I can look at it using something like [jwt.io](https://jwt.io)  
+
