@@ -4,11 +4,11 @@
 
 [dockerhub access_token](https://hub.docker.com/settings/security)  
 [dockerhub account settings](https://hub.docker.com/settings/general)
+
 ```env
 DOCKER_HUB_USERNAME={{ your dockerhub username}}
 DOCKER_HUB_ACCESS_TOKEN={{ your dockerhub access_token}}
 ```
-
 
 ## Docker
 
@@ -18,10 +18,13 @@ docker run ghstahl/crypto-gen version
 ```
 
 ## Examples
+
 ```bash
 docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_after="2007-01-02Z" --password="Tricycle2-Hazing-Illusion"
 ```
+
 ### Output
+
 ```json
 {
     "private_key": "-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-256-CBC,0f844cb4fdf6085959cf948b8d43b716\n\ns4PjREFIYtg6HRvf6pzPNfdDV4++m4IfKfg9HoehE2VBRb34zZJ7v6ROnEkMBdPS\nJXn2+3NzwxzGscZiwvEnWd7hJPmhdhi6wWFUEgJYzqWl5Du0ZW7Omozs2edUfx5K\nm8LTTfLpq617pvRHxw07RYvKYCiuIupCnIFfw3R37NM=\n-----END EC PRIVATE KEY-----\n",
@@ -35,7 +38,9 @@ docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_a
 ```bash
 docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2006-01-02Z" --password="Tricycle2-Hazing-Illusion" --count=2
 ```
+
 ### Output
+
 ```json
 [
     {
@@ -54,8 +59,8 @@ docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2006-01-02Z" --p
     }
 ]
 ```
+
 ## JWT
 
 There is a small [example](internal/jwt/keys_test.go) of minting a JWT and validatig it using these generated keys.  
 I have started using a jwt as a secure way to send out an invite code that I can then verify when it comes back.  Usually I did this by encrypting a JSON string using a symetric key, then URL encoding it.  A JWT does the same thing except I can look at it using something like [jwt.io](https://jwt.io)  
-
