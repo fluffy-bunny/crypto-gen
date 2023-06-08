@@ -52,7 +52,7 @@ func TestCreateKeySet(t *testing.T) {
 	require.NoError(t, err)
 	keyLen := keySet.Len()
 	require.Equal(t, keyLen, 1)
-	keyS, ok := keySet.Get(0)
+	keyS, ok := keySet.Key(0)
 	require.True(t, ok)
 	require.Equal(t, "0b2cd2e54c924ce89f010f242862367d", keyS.KeyID())
 }

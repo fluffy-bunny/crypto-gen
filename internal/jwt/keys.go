@@ -4,7 +4,7 @@ import (
 	"crypto_gen/internal/jwt/models"
 	"encoding/json"
 
-	"github.com/lestrrat-go/jwx/jwk"
+	jwk "github.com/lestrrat-go/jwx/v2/jwk"
 )
 
 func LoadSigningKey(jsonKeys []byte) ([]*models.SigningKey, error) {
@@ -27,7 +27,7 @@ func CreateKeySet(keys []*models.SigningKey) (jwk.Set, error) {
 		if err != nil {
 			return nil, err
 		}
-		set.Add(pubkey)
+		set.AddKey(pubkey)
 	}
 	return set, nil
 }

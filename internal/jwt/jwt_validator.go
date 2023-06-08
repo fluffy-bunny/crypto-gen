@@ -5,8 +5,8 @@ import (
 
 	grpcdotnetgo_utils "github.com/fluffy-bunny/grpcdotnetgo/pkg/utils"
 	"github.com/gogo/status"
-	"github.com/lestrrat-go/jwx/jwk"
-	jwxt "github.com/lestrrat-go/jwx/jwt"
+	jwk "github.com/lestrrat-go/jwx/v2/jwk"
+	jwxt "github.com/lestrrat-go/jwx/v2/jwt"
 
 	"google.golang.org/grpc/codes"
 )
