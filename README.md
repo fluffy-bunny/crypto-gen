@@ -27,11 +27,31 @@ docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_a
 
 ```json
 {
-    "private_key": "-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-256-CBC,0f844cb4fdf6085959cf948b8d43b716\n\ns4PjREFIYtg6HRvf6pzPNfdDV4++m4IfKfg9HoehE2VBRb34zZJ7v6ROnEkMBdPS\nJXn2+3NzwxzGscZiwvEnWd7hJPmhdhi6wWFUEgJYzqWl5Du0ZW7Omozs2edUfx5K\nm8LTTfLpq617pvRHxw07RYvKYCiuIupCnIFfw3R37NM=\n-----END EC PRIVATE KEY-----\n",
-    "public_key": "-----BEGIN EC  PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEa22vib7IzG7CI0apholWnnI6GXcb\nn4tPZH4j+BvCcLbVzWaEUuH0AgxtyoLg7ZTae6KQO0XD43NkWzs5RqrCUQ==\n-----END EC  PUBLIC KEY-----\n",
+    "private_key": "-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-256-CBC,781a940e899958a0b4df3b7421f8437e\n\nWaPqcs2NVH1pSAGvmTzCJkhg4lsZvg/4CK2GWzmPw7f64Wy0IGdw4GR++YgchdOl\nH4nI/Ike903x1IeLgn8p+yI6gv/ly2Uyw3v1AV+d0UmY7duHZwDLLaF3/mdYDwgZ\npswVUl1Dy6fllQ9fYGxWJ5vDE81FO7zymc2VtMeIUg4=\n-----END EC PRIVATE KEY-----\n",
+    "public_key": "-----BEGIN EC  PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE6hHsmVUijbr+qgu3Hgk+qDHx8ugq\nZWmq6Xud+JtN+k/jF+3Re4U+uOqACtenfAOBOFL9KB7whAnTj4dso9wURA==\n-----END EC  PUBLIC KEY-----\n",
     "not_before": "2006-01-02T00:00:00Z",
     "not_after": "0001-01-01T00:00:00Z",
-    "password": "Tricycle2-Hazing-Illusion"
+    "password": "Tricycle2-Hazing-Illusion",
+    "kid": "060f04d7d26f432c9036414218fc79a7",
+    "public_jwk": {
+        "alg": "ES256",
+        "crv": "P-256",
+        "kid": "060f04d7d26f432c9036414218fc79a7",
+        "kty": "EC",
+        "use": "sig",
+        "x": "6hHsmVUijbr-qgu3Hgk-qDHx8ugqZWmq6Xud-JtN-k8",
+        "y": "4xft0XuFPrjqgArXp3wDgThS_Sge8IQJ04-HbKPcFEQ"
+    },
+    "private_jwk": {
+        "alg": "ES256",
+        "crv": "P-256",
+        "d": "w_XCSxsJRmt0dGQj3fjgyKwhPfKYNGFvwXtHpOMSiXk",
+        "kid": "060f04d7d26f432c9036414218fc79a7",
+        "kty": "EC",
+        "use": "sig",
+        "x": "6hHsmVUijbr-qgu3Hgk-qDHx8ugqZWmq6Xud-JtN-k8",
+        "y": "4xft0XuFPrjqgArXp3wDgThS_Sge8IQJ04-HbKPcFEQ"
+    }
 }
 ```
 
