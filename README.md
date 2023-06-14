@@ -44,18 +44,58 @@ docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2006-01-02Z" --p
 ```json
 [
     {
-        "private_key": "-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-256-CBC,9829d46fb9d6cc967ff0b0fa79c4c3e1\n\nO4o0UlR5s/sqW2lPWvd1UKxQ969LweP/JbYy2sxBtdZsHD4altqfGr5PLJwp/keF\nrbFqli/D/y8Y+E4rSaff92QGYGtA40WJfBYL544sFLYCefTIkdrSyHLxglq9b86l\nYsQhs2rM5QS9DQQ2jGC7wLO5SOz82+Oy3nBQwLnfeq0=\n-----END EC PRIVATE KEY-----\n",
-        "public_key": "-----BEGIN EC  PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqph2QQWPUY9h0GJpebKHAZMg2pC7\nJwkS1ZNoXpFMU20Tl+EOiqv86Hd0L/+iujqjB/cDIZ1t0k9HrY0pYQCtoQ==\n-----END EC  PUBLIC KEY-----\n",
+        "private_key": "-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-256-CBC,e872837cf1228f555a9c9ff84b646767\n\nDB2Ip8JazTjnXJbqf2TkOWj3cifCZtxyzfKhhnv399emDWso0s0GTs3FeUBNMcGB\nCAbOtA/QokCQ+3I0vstG6swLAXz2F1TDob7k8RweK9AwsgQV9oyl9YSXOjpZVh0M\n9s4Jp3sZDHjUNDiZyl5P+V9o3A+HRqQwmYYP+HFsSsk=\n-----END EC PRIVATE KEY-----\n",
+        "public_key": "-----BEGIN EC  PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEwiPQKrrDZ6kRE2HPedT5HFWxkeCo\nBw6EaaYwPlaNBL7AO7iTWbkOcaZfvWqg/HV2+o94H7iEt6ZdFn62uK0TtQ==\n-----END EC  PUBLIC KEY-----\n",
         "not_before": "2006-01-02T00:00:00Z",
         "not_after": "2007-01-02T00:00:00Z",
-        "password": "Tricycle2-Hazing-Illusion"
+        "password": "Tricycle2-Hazing-Illusion",
+        "kid": "c4686f20059b4f7a9024eb853489debe",
+        "public_jwk": {
+            "alg": "ES256",
+            "crv": "P-256",
+            "kid": "c4686f20059b4f7a9024eb853489debe",
+            "kty": "EC",
+            "use": "sig",
+            "x": "wiPQKrrDZ6kRE2HPedT5HFWxkeCoBw6EaaYwPlaNBL4",
+            "y": "wDu4k1m5DnGmX71qoPx1dvqPeB-4hLemXRZ-tritE7U"
+        },
+        "private_jwk": {
+            "alg": "ES256",
+            "crv": "P-256",
+            "d": "vvx3J-YNehpUv3Nd8VC9oKOqoGeXrbwyBAlEYzLHrf0",
+            "kid": "c4686f20059b4f7a9024eb853489debe",
+            "kty": "EC",
+            "use": "sig",
+            "x": "wiPQKrrDZ6kRE2HPedT5HFWxkeCoBw6EaaYwPlaNBL4",
+            "y": "wDu4k1m5DnGmX71qoPx1dvqPeB-4hLemXRZ-tritE7U"
+        }
     },
     {
-        "private_key": "-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-256-CBC,9829d46fb9d6cc967ff0b0fa79c4c3e1\n\nO4o0UlR5s/sqW2lPWvd1UKxQ969LweP/JbYy2sxBtdZsHD4altqfGr5PLJwp/keF\nrbFqli/D/y8Y+E4rSaff92QGYGtA40WJfBYL544sFLYCefTIkdrSyHLxglq9b86l\nYsQhs2rM5QS9DQQ2jGC7wLO5SOz82+Oy3nBQwLnfeq0=\n-----END EC PRIVATE KEY-----\n",
-        "public_key": "-----BEGIN EC  PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqph2QQWPUY9h0GJpebKHAZMg2pC7\nJwkS1ZNoXpFMU20Tl+EOiqv86Hd0L/+iujqjB/cDIZ1t0k9HrY0pYQCtoQ==\n-----END EC  PUBLIC KEY-----\n",
+        "private_key": "-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-256-CBC,a7caa77eaa106d317bc0a1d53286e83d\n\nxw+tgrpAH5Tq/GEFiS07k4GuSm+jG9gFUutOcUXPkD6gBVY+WoN2FpRloiIADWyF\nEsAQg8ssSebqrYt3NFjq/5VgYi1mWmkxRVpCd2gYFaMn4sOIb5T17afyKean5eWo\nQWcn1AmmWqgX/51h282t5IgW0qrHrso8cUqu2YfYxmM=\n-----END EC PRIVATE KEY-----\n",
+        "public_key": "-----BEGIN EC  PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEzfWAl57uzaKKD3b3xfFzlH9PBu3G\nWcABnOwimvGfc1CaS/JWK94v1AaTd98Nf6AYB6VeErj1hQIPFEOJGgyklA==\n-----END EC  PUBLIC KEY-----\n",
         "not_before": "2006-12-02T00:00:00Z",
         "not_after": "2007-12-02T00:00:00Z",
-        "password": "Tricycle2-Hazing-Illusion"
+        "password": "Tricycle2-Hazing-Illusion",
+        "kid": "a225baf703714cd1b857ae0a5f6574e8",
+        "public_jwk": {
+            "alg": "ES256",
+            "crv": "P-256",
+            "kid": "a225baf703714cd1b857ae0a5f6574e8",
+            "kty": "EC",
+            "use": "sig",
+            "x": "zfWAl57uzaKKD3b3xfFzlH9PBu3GWcABnOwimvGfc1A",
+            "y": "mkvyViveL9QGk3ffDX-gGAelXhK49YUCDxRDiRoMpJQ"
+        },
+        "private_jwk": {
+            "alg": "ES256",
+            "crv": "P-256",
+            "d": "60wvcOHchN5MurcjoL-uEezRBI_CNoLAbmmT9_OKu5U",
+            "kid": "a225baf703714cd1b857ae0a5f6574e8",
+            "kty": "EC",
+            "use": "sig",
+            "x": "zfWAl57uzaKKD3b3xfFzlH9PBu3GWcABnOwimvGfc1A",
+            "y": "mkvyViveL9QGk3ffDX-gGAelXhK49YUCDxRDiRoMpJQ"
+        }
     }
 ]
 ```
