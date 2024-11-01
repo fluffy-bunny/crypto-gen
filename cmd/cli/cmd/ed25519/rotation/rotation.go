@@ -11,7 +11,7 @@ import (
 
 	"crypto_gen/cmd/cli/cmd/ecdsa/shared"
 	"crypto_gen/internal/cobra_utils"
-	"crypto_gen/internal/ecdsa"
+	internal_ed25519 "crypto_gen/internal/ed25519"
 	"crypto_gen/internal/utils"
 
 	"github.com/google/uuid"
@@ -34,13 +34,13 @@ var (
 // aboutCmd represents the about command
 var command = &cobra.Command{
 	Use:   "rotation",
-	Short: "generate ecdsa key rotation set",
+	Short: "generate ed25519 key rotation set",
 	Long: `
 Generate a ECDSA key rotation set
 -------------------------------------------------------
-docker run ghstahl/crypto-gen ecdsa rotation
-docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2022-01-01Z" --password="Tricycle2-Hazing-Illusion"
-docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2022-01-01Z" --password="Tricycle2-Hazing-Illusion" --key_duration_months=12 --overlap_months=1 --count=2
+docker run ghstahl/crypto-gen ed25519 rotation
+docker run ghstahl/crypto-gen ed25519 rotation --time_not_before="2022-01-01Z" --password="Tricycle2-Hazing-Illusion"
+docker run ghstahl/crypto-gen ed25519 rotation --time_not_before="2022-01-01Z" --password="Tricycle2-Hazing-Illusion" --key_duration_months=12 --overlap_months=1 --count=2
 
 [
 {
@@ -60,17 +60,19 @@ docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2022-01-01Z" --p
 	PersistentPreRunE: cobra_utils.ParentPersistentPreRunE,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		var keySets []shared.EcdsaKeySet
+		var keySets []*internal_ed25519.KeyPair
 		currentNotBefore := shared.TimeNotBefore
 		for i := 0; i < int(count); i++ {
-			privateKey, privateEncoded, publicEncoded, err := ecdsa.GenerateECDSAPublicPrivateKeySet(shared.Password)
+			kp, err := internal_ed25519.GenerateED25519KeyPair()
 			if err != nil {
 				return err
 			}
+
 			notBefore := currentNotBefore
 			notAfter := AddMonth(notBefore, int(keyDurationMonths))
 			kid := strings.ReplaceAll(uuid.New().String(), "-", "")
-			publicKey := &privateKey.PublicKey
+			publicKey := kp.PublicKey
+			privateKey := kp.PrivateKey
 
 			priv := jose.JSONWebKey{Key: privateKey, KeyID: kid, Algorithm: string(jose.ES256), Use: "sig"}
 			privJS, err := priv.MarshalJSON()
@@ -81,16 +83,7 @@ docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2022-01-01Z" --p
 			pubJS, err := pub.MarshalJSON()
 			var mapPublicJWK map[string]interface{}
 			json.Unmarshal(pubJS, &mapPublicJWK)
-			keySets = append(keySets, shared.EcdsaKeySet{
-				KID:        kid,
-				Password:   shared.Password,
-				PrivateKey: privateEncoded,
-				PublicKey:  publicEncoded,
-				NotBefore:  notBefore.Format(time.RFC3339),
-				NotAfter:   notAfter.Format(time.RFC3339),
-				PublicJWK:  mapPublicJWK,
-				PrivateJWK: mapPrivateJWK,
-			})
+			keySets = append(keySets, kp)
 			currentNotBefore = AddMonth(notAfter, int(0-overlapMonths))
 		}
 
