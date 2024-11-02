@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -9,6 +8,8 @@ import (
 
 	"crypto_gen/cmd/cli/cmd/about"
 	"crypto_gen/cmd/cli/cmd/ecdsa"
+	"crypto_gen/cmd/cli/cmd/ed25519"
+
 	"crypto_gen/cmd/cli/cmd/version"
 
 	"github.com/spf13/cobra"
@@ -52,4 +53,5 @@ func init() {
 	about.InitCommand(rootCmd)
 	version.InitCommand(rootCmd)
 	ecdsa.InitCommand(rootCmd)
+	ed25519.InitCommand(rootCmd)
 }

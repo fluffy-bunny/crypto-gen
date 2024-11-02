@@ -1,6 +1,8 @@
 package shared
 
-import "time"
+import (
+	"time"
+)
 
 var (
 	TimeNotBefore time.Time
@@ -22,3 +24,16 @@ type (
 		PrivateJWK map[string]interface{} `json:"private_jwk"`
 	}
 )
+
+func AddMonth(t time.Time, offsetMonth int) time.Time {
+	return t.AddDate(0, offsetMonth, 0)
+}
+func StartOfMonthUTC(offsetMonth int) time.Time {
+	now := time.Now()
+	currentYear := now.Year()
+	nextYear := currentYear
+	currentMonth := now.Month()
+	tt := time.Date(nextYear, currentMonth, 1, 0, 0, 0, 0, time.UTC)
+	tt = tt.AddDate(0, offsetMonth, 0)
+	return tt
+}
