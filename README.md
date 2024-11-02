@@ -19,8 +19,17 @@ docker run ghstahl/crypto-gen version
 
 ## Examples
 
+### ed25519 (recommended)
+
+```bash
+.\cli.exe ed25519 rotation
+```
+
+### ecdsa
+
 ```bash
 docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_after="2007-01-02Z" --password="Tricycle2-Hazing-Illusion"
+
 ```
 
 ### Output

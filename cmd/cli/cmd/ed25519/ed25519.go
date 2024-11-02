@@ -1,32 +1,23 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-*/
-package ecdsa
+package ed25519
 
 import (
-	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"crypto_gen/cmd/cli/cmd/ecdsa/shared"
+	"crypto_gen/cmd/cli/cmd/ed25519/rotation"
 	"crypto_gen/internal/cobra_utils"
-	"crypto_gen/internal/ecdsa"
+	internal_ed25519 "crypto_gen/internal/ed25519"
 	"crypto_gen/internal/utils"
 
-	"crypto_gen/cmd/cli/cmd/ecdsa/rotation"
-
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/square/go-jose"
 	"github.com/tkuchiki/parsetime"
 )
 
 const (
 	timeNotBeforeFlagName = "time_not_before"
 	timeNotAfterFlagName  = "time_not_after"
-	passwordFlagName      = "password"
 )
 
 var (
@@ -35,18 +26,20 @@ var (
 	timeNotAfterValue string
 )
 
+const use = "ed25519"
+
 // aboutCmd represents the about command
 var command = &cobra.Command{
-	Use:   "ecdsa",
-	Short: "generate ecdsa keys",
+	Use:   use,
+	Short: "generate ed25519 keys",
 	Long: `
 docker run ghstahl/crypto-gen version
 
-Generate a single ECDSA key
+Generate a single ed25519 key
 -------------------------------------------------------
-docker run ghstahl/crypto-gen ecdsa 
-docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02T15:04:05Z" --time_not_after="2007-01-02T15:04:05Z" --password="Tricycle2-Hazing-Illusion"
-docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_after="2007-01-02Z" --password="Tricycle2-Hazing-Illusion"
+docker run ghstahl/crypto-gen ed25519 
+docker run ghstahl/crypto-gen ed25519 --time_not_before="2006-01-02T15:04:05Z" --time_not_after="2007-01-02T15:04:05Z" --password="Tricycle2-Hazing-Illusion"
+docker run ghstahl/crypto-gen ed25519 --time_not_before="2006-01-02Z" --time_not_after="2007-01-02Z" --password="Tricycle2-Hazing-Illusion"
 
 {
     "private_key": "-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-256-CBC,94256fd7bcfa6a3e78262200b8cbd9ca\n\nxouwLPx0XF6b48haUc64HgSdCKV0Uo5qKZoiXUcf2QW1m12IofAOSR3reU5UYPop\nV8YITld40NSNKNzlmeEUPthJAkfDO6jGBG2mGlMg5HNFBwZBMDIOL0joCEf3qgBX\nDUlUmm0LBFdFq9wDsBLPdDfzsmmFqrl3YCoIdW11wpU=\n-----END EC PRIVATE KEY-----\n",
@@ -78,34 +71,13 @@ docker run ghstahl/crypto-gen ecdsa --time_not_before="2006-01-02Z" --time_not_a
 	},
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		privateKey, privateEncoded, publicEncoded, err := ecdsa.GenerateECDSAPublicPrivateKeySet(shared.Password)
+
+		keyPair, err := internal_ed25519.GenerateED25519KeyPair()
 		if err != nil {
 			return err
 		}
-		kid := strings.ReplaceAll(uuid.New().String(), "-", "")
-		publicKey := &privateKey.PublicKey
 
-		priv := jose.JSONWebKey{Key: privateKey, KeyID: kid, Algorithm: string(jose.ES256), Use: "sig"}
-		privJS, _ := priv.MarshalJSON()
-		var mapPrivateJWK map[string]interface{}
-		json.Unmarshal(privJS, &mapPrivateJWK)
-
-		pub := jose.JSONWebKey{Key: publicKey, KeyID: kid, Algorithm: string(jose.ES256), Use: "sig"}
-		pubJS, _ := pub.MarshalJSON()
-		var mapJWK map[string]interface{}
-		json.Unmarshal(pubJS, &mapJWK)
-
-		keySet := shared.EcdsaKeySet{
-			KID:        kid,
-			Password:   shared.Password,
-			PrivateKey: privateEncoded,
-			PublicKey:  publicEncoded,
-			NotBefore:  shared.TimeNotBefore.Format(time.RFC3339),
-			NotAfter:   shared.TimeNotAfter.Format(time.RFC3339),
-			PublicJWK:  mapJWK,
-			PrivateJWK: mapPrivateJWK,
-		}
-		fmt.Println(utils.PrettyJSON(keySet))
+		fmt.Println(utils.PrettyJSON(keyPair))
 		return nil
 	},
 	PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -137,9 +109,6 @@ func InitCommand(parent *cobra.Command) {
 	command.Flags().StringVar(&timeNotAfterValue, timeNotAfterFlagName, "", fmt.Sprintf("i.e. --%s=\"2006-01-02T15:04:05Z\" or --%s=\"2006-01-02T15:04:05\"", timeNotAfterFlagName, timeNotAfterFlagName))
 	viper.BindPFlag(timeNotAfterValue, command.Flags().Lookup(timeNotAfterFlagName))
 
-	command.PersistentFlags().StringVar(&shared.Password, passwordFlagName, "", fmt.Sprintf("i.e. --%s=\"Tricycle2-Hazing-Illusion\"", passwordFlagName))
-	command.MarkFlagRequired(passwordFlagName)
-	viper.BindPFlag(shared.Password, command.PersistentFlags().Lookup(passwordFlagName))
-
 	rotation.InitCommand(command)
+
 }
