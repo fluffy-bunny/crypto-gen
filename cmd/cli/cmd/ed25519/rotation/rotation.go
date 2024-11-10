@@ -73,7 +73,8 @@ docker run ghstahl/crypto-gen ed25519 rotation --time_not_before="2022-01-01Z" -
 			kid := strings.ReplaceAll(uuid.New().String(), "-", "")
 			publicKey := kp.PublicKey
 			privateKey := kp.PrivateKey
-
+			kp.NotBefore = notBefore
+			kp.NotAfter = notAfter
 			priv := jose.JSONWebKey{Key: privateKey, KeyID: kid, Algorithm: string(jose.ES256), Use: "sig"}
 			privJS, err := priv.MarshalJSON()
 			var mapPrivateJWK map[string]interface{}

@@ -28,6 +28,15 @@
             "program": "${workspaceFolder}/cmd/cli",
             
             "args": [ "ecdsa","rotation","--time_not_before=\"2006-01-02T15:04:05Z\""]
-        },          
+        },   
+        {
+            "name": "ed25519/rotation",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/cli",
+            
+            "args": [ "ed25519","rotation","--time_not_before=\"2024-11-02T15:04:05Z\""]
+        },            
     ]
 }
