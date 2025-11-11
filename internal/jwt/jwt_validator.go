@@ -3,12 +3,11 @@ package jwt
 import (
 	"time"
 
-	grpcdotnetgo_utils "github.com/fluffy-bunny/grpcdotnetgo/pkg/utils"
-	"github.com/gogo/status"
+	fluffycore_utils "github.com/fluffy-bunny/fluffycore/utils"
+	status "github.com/gogo/status"
 	jwk "github.com/lestrrat-go/jwx/v2/jwk"
 	jwxt "github.com/lestrrat-go/jwx/v2/jwt"
-
-	"google.golang.org/grpc/codes"
+	codes "google.golang.org/grpc/codes"
 )
 
 // JWTValidatorOptions is a struct for specifying configuration options.
@@ -26,10 +25,10 @@ type JWTValidator struct {
 }
 
 func validateJWTValidatorOptions(options *JWTValidatorOptions) error {
-	if grpcdotnetgo_utils.IsEmptyOrNil(options) {
+	if fluffycore_utils.IsEmptyOrNil(options) {
 		return status.Error(codes.InvalidArgument, "options cannot be nil")
 	}
-	if grpcdotnetgo_utils.IsEmptyOrNil(options.KeySet) {
+	if fluffycore_utils.IsEmptyOrNil(options.KeySet) {
 		return status.Error(codes.InvalidArgument, "options.KeySet cannot be nil")
 	}
 	if options.ClockSkewMinutes < 0 {
@@ -62,8 +61,8 @@ func (jwtValidator *JWTValidator) shouldValidateSignature() bool {
 	return *jwtValidator.options.ValidateSignature
 }
 func (jwtValidator *JWTValidator) shouldValidateIssuer() bool {
-	if !grpcdotnetgo_utils.IsEmptyOrNil(jwtValidator.options.RequiredIssuer) &&
-		!grpcdotnetgo_utils.IsEmptyOrNil(*(jwtValidator.options.RequiredIssuer)) {
+	if fluffycore_utils.IsNotEmptyOrNil(jwtValidator.options.RequiredIssuer) &&
+		fluffycore_utils.IsNotEmptyOrNil(*(jwtValidator.options.RequiredIssuer)) {
 		return true
 	}
 	return false

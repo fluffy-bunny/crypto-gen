@@ -8,6 +8,13 @@ import (
 	"errors"
 )
 
+// EncryptPemBlock encrypts a PEM block using RFC 1423 encryption.
+// WARNING: RFC 1423 encryption is deprecated and insecure. It's vulnerable to padding oracle attacks.
+// Both x509.EncryptPEMBlock and x509.DecryptPEMBlock are deprecated due to security vulnerabilities.
+// For new applications, consider:
+// 1. Using unencrypted PKCS#8 keys with secure key management systems
+// 2. Implementing application-level encryption with modern algorithms
+// 3. Using hardware security modules (HSMs) or cloud key vaults
 func EncryptPemBlock(block *pem.Block, password string, alg x509.PEMCipher) error {
 	if len(password) == 0 {
 		return nil
@@ -15,6 +22,8 @@ func EncryptPemBlock(block *pem.Block, password string, alg x509.PEMCipher) erro
 	if alg == x509.PEMCipher(0) {
 		alg = x509.PEMCipherAES256
 	}
+	// Using deprecated x509.EncryptPEMBlock for backward compatibility
+	// WARNING: This function is deprecated and insecure - use at your own risk
 	newBlock, err := x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(password), alg)
 	if err != nil {
 		return err
@@ -30,10 +39,18 @@ func EncryptPemBlock(block *pem.Block, password string, alg x509.PEMCipher) erro
 	return nil
 }
 
+// DecryptPemBlock decrypts a PEM block encrypted with RFC 1423 encryption.
+// WARNING: RFC 1423 encryption is deprecated and insecure. It's vulnerable to padding oracle attacks.
+// Both x509.EncryptPEMBlock and x509.DecryptPEMBlock are deprecated due to security vulnerabilities.
+// Consider migrating to secure key management solutions for better security.
 func DecryptPemBlock(block *pem.Block, password string) error {
-	if !x509.IsEncryptedPEMBlock(block) {
+	// Check if PEM block is encrypted by looking for RFC 1423 headers
+	// This replaces the deprecated x509.IsEncryptedPEMBlock
+	if block.Headers == nil || block.Headers["Proc-Type"] == "" || block.Headers["DEK-Info"] == "" {
 		return nil
 	}
+	// Using deprecated x509.DecryptPEMBlock for backward compatibility
+	// WARNING: This function is deprecated and insecure - use at your own risk
 	data, err := x509.DecryptPEMBlock(block, []byte(password))
 	if err != nil {
 		return err
@@ -92,6 +109,8 @@ func encode(password string, privateKey *rsa.PrivateKey, publicKey *rsa.PublicKe
 		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
 	}
 	if password != "" {
+		// WARNING: Using deprecated RFC 1423 encryption
+		// For production use, consider generating unencrypted keys and storing them securely
 		if err := EncryptPemBlock(block, password, x509.PEMCipherAES256); err != nil {
 			return "", "", err
 		}
