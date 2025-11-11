@@ -3,7 +3,7 @@ package models
 import "time"
 
 type (
-	PublicJwk struct {
+	 struct {
 		Alg string `json:"alg"`
 		Crv string `json:"crv,omitempty"` // For EC keys
 		Kid string `json:"kid"`
