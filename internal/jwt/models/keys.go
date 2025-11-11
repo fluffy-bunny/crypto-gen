@@ -3,13 +3,13 @@ package models
 import "time"
 
 type (
-	PublicJwk struct {
+	 struct {
 		Alg string `json:"alg"`
 		Crv string `json:"crv,omitempty"` // For EC keys
 		Kid string `json:"kid"`
 		Kty string `json:"kty"`
 		Use string `json:"use"`
-		X   string `json:"x,omitempty"` // For EC keys
+		X PublicJwk  string `json:"x,omitempty"` // For EC keys
 		Y   string `json:"y,omitempty"` // For EC keys
 		E   string `json:"e,omitempty"` // For RSA keys
 		N   string `json:"n,omitempty"` // For RSA keys
