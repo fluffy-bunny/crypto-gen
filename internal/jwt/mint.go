@@ -7,20 +7,20 @@ import (
 	"fmt"
 	"strings"
 
-	core_hashset "github.com/fluffy-bunny/grpcdotnetgo/pkg/gods/sets/hashset"
-	grpcdotnetgo_utils "github.com/fluffy-bunny/grpcdotnetgo/pkg/utils"
+	core_hashset "github.com/fluffy-bunny/fluffycore/gods/sets/hashset"
+	fluffycore_utils "github.com/fluffy-bunny/fluffycore/utils"
 	golang_jwt "github.com/golang-jwt/jwt"
-	"github.com/rs/xid"
+	xid "github.com/rs/xid"
 )
 
 func MintStandardJWT(signingKey *models.SigningKey, standardClaims *golang_jwt.StandardClaims, claims contracts.IClaims) (string, error) {
 	standardClaims.Id = xid.New().String()
 	var buildClaimsMap = func(standardClaims *golang_jwt.StandardClaims, extras contracts.IClaims) contracts.IClaims {
 		audienceSet := core_hashset.NewStringSet()
-		if !grpcdotnetgo_utils.IsEmptyOrNil(standardClaims.Audience) {
+		if fluffycore_utils.IsNotEmptyOrNil(standardClaims.Audience) {
 			audienceSet.Add(standardClaims.Audience)
 		}
-		if !grpcdotnetgo_utils.IsEmptyOrNil(extras) {
+		if fluffycore_utils.IsNotEmptyOrNil(extras) {
 			extraAudInterface := extras.Get("aud")
 			switch tt := extraAudInterface.(type) {
 			case string:

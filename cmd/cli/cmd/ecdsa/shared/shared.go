@@ -25,6 +25,8 @@ type (
 	}
 )
 
+type KeySet = EcdsaKeySet
+
 func AddMonth(t time.Time, offsetMonth int) time.Time {
 	return t.AddDate(0, offsetMonth, 0)
 }
