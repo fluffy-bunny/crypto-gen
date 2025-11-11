@@ -9,6 +9,7 @@ import (
 	"crypto_gen/cmd/cli/cmd/about"
 	"crypto_gen/cmd/cli/cmd/ecdsa"
 	"crypto_gen/cmd/cli/cmd/ed25519"
+	"crypto_gen/cmd/cli/cmd/rs256"
 
 	"crypto_gen/cmd/cli/cmd/version"
 
@@ -54,4 +55,5 @@ func init() {
 	version.InitCommand(rootCmd)
 	ecdsa.InitCommand(rootCmd)
 	ed25519.InitCommand(rootCmd)
+	rs256.InitCommand(rootCmd)
 }
