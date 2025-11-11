@@ -1,21 +1,21 @@
 package jwt
 
 import (
-	"crypto_gen/internal/jwt/models"
 	"encoding/json"
 
+	jwtminter "github.com/fluffy-bunny/fluffycore/contracts/jwtminter"
 	jwk "github.com/lestrrat-go/jwx/v2/jwk"
 )
 
-func LoadSigningKey(jsonKeys []byte) ([]*models.SigningKey, error) {
-	keys := make([]*models.SigningKey, 0)
+func LoadSigningKey(jsonKeys []byte) ([]*jwtminter.SigningKey, error) {
+	keys := make([]*jwtminter.SigningKey, 0)
 	err := json.Unmarshal([]byte(jsonKeys), &keys)
 	if err != nil {
 		return nil, err
 	}
 	return keys, nil
 }
-func CreateKeySet(keys []*models.SigningKey) (jwk.Set, error) {
+func CreateKeySet(keys []*jwtminter.SigningKey) (jwk.Set, error) {
 	set := jwk.NewSet()
 	for _, key := range keys {
 		keyB, _ := json.Marshal(key.PrivateJwk)

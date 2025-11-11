@@ -2,10 +2,11 @@ package jwt
 
 import (
 	"crypto_gen/internal/jwt/contracts"
-	"crypto_gen/internal/jwt/models"
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	jwtminter "github.com/fluffy-bunny/fluffycore/contracts/jwtminter"
 
 	core_hashset "github.com/fluffy-bunny/fluffycore/gods/sets/hashset"
 	fluffycore_utils "github.com/fluffy-bunny/fluffycore/utils"
@@ -13,7 +14,7 @@ import (
 	xid "github.com/rs/xid"
 )
 
-func MintStandardJWT(signingKey *models.SigningKey, standardClaims *golang_jwt.StandardClaims, claims contracts.IClaims) (string, error) {
+func MintStandardJWT(signingKey *jwtminter.SigningKey, standardClaims *golang_jwt.StandardClaims, claims contracts.IClaims) (string, error) {
 	standardClaims.Id = xid.New().String()
 	var buildClaimsMap = func(standardClaims *golang_jwt.StandardClaims, extras contracts.IClaims) contracts.IClaims {
 		audienceSet := core_hashset.NewStringSet()
@@ -52,7 +53,7 @@ func MintStandardJWT(signingKey *models.SigningKey, standardClaims *golang_jwt.S
 	return token, nil
 }
 
-func MintGenericJWT(signingKey *models.SigningKey, claims contracts.IClaims) (string, error) {
+func MintGenericJWT(signingKey *jwtminter.SigningKey, claims contracts.IClaims) (string, error) {
 	var method golang_jwt.SigningMethod
 	switch signingKey.PrivateJwk.Alg {
 	case "RS256":
