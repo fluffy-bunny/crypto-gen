@@ -17,6 +17,24 @@ docker run ghstahl/crypto-gen
 docker run ghstahl/crypto-gen version
 ```
 
+## Prebuilt binaries (no Go toolchain required)
+
+Every push to `main` publishes a [GitHub Release](https://github.com/fluffy-bunny/crypto-gen/releases) tagged with the same version used for the Docker image, with statically-linked, CGO-free `cli` binaries attached for:
+
+- `cli-linux-amd64.tar.gz`
+- `cli-linux-arm64.tar.gz`
+
+along with a `checksums.txt`. These are meant for automation (e.g. a Pulumi `local.Command`/dynamic provider) that needs to shell out to the CLI to generate keys and stuff the output into a Kubernetes `Secret`, without needing Go, or a docker daemon, installed wherever that automation runs:
+
+```bash
+curl -fsSL -o cli.tar.gz \
+  https://github.com/fluffy-bunny/crypto-gen/releases/download/<tag>/cli-linux-amd64.tar.gz
+tar -xzf cli.tar.gz
+./cli ed25519 rotation --count=2 > keys.json
+```
+
+Pin `<tag>` to a specific release rather than tracking `latest`, so a new crypto-gen release can't silently change what an existing Pulumi stack produces.
+
 ## Examples
 
 ### ed25519 (recommended)
@@ -139,3 +157,35 @@ docker run ghstahl/crypto-gen ecdsa rotation --time_not_before="2006-01-02Z" --p
 
 There is a small [example](internal/jwt/keys_test.go) of minting a JWT and validating it using these generated keys.  
 I have started using a jwt as a secure way to send out an invite code that I can then verify when it comes back. Usually I did this by encrypting a JSON string using a symetric key, then URL encoding it. A JWT does the same thing except I can look at it using something like [jwt.io](https://jwt.io)
+
+## Functionality
+
+**Key generation** (`cli.exe <alg> [rotation]`, or the `internal/<alg>` packages directly):
+
+| Algorithm | CLI command | Curve/size | Notes |
+|---|---|---|---|
+| RS256 | `rs256` / `rs256 rotation` | RSA 2048 | password-protected PEM optional |
+| ECDSA | `ecdsa` / `ecdsa rotation` | P-256 (ES256) | password-protected PEM optional; the CLI always generates P-256 — there's no flag to pick P-384/P-521 |
+| Ed25519 | `ed25519` / `ed25519 rotation` | Ed25519 (EdDSA) | recommended default; see [internal/ed25519/ed25519.go](internal/ed25519/ed25519.go) |
+
+Every generated key ships both a PEM key pair and public/private [JWK](https://datatracker.ietf.org/doc/html/rfc7517) representations, and `rotation` variants emit a set of `--count` keys spanning a not-before/not-after window for key rotation.
+
+**JWT minting and validation** ([internal/jwt](internal/jwt)):
+
+- `LoadSigningKey` / `CreateKeySet` ([internal/jwt/keys.go](internal/jwt/keys.go)) turn a signing-key JSON document into a `jwx` public [`jwk.Set`](https://pkg.go.dev/github.com/lestrrat-go/jwx/v2/jwk) for validation.
+- `MintStandardJWT` / `MintGenericJWT` ([internal/jwt/mint.go](internal/jwt/mint.go)) sign a token with whatever key you hand them, dispatching on the key's `alg`: **RS256, RS384, RS512, ES256, ES384, ES512, EdDSA** are all supported signing methods.
+- `JWTValidator` ([internal/jwt/jwt_validator.go](internal/jwt/jwt_validator.go)) parses and validates a token against a `jwk.Set`, with configurable signature verification, required issuer, and clock-skew tolerance.
+
+Note: while the minter/validator support all three algorithm families end to end (including ES384/ES512), the CLI's `ecdsa` generator currently only produces P-256/ES256 keys — ES384/ES512 keys have to be constructed by hand (or via another tool) to feed into the minter.
+
+## Test Coverage
+
+| Algorithm | Key generation | Low-level sign/verify | Mint → validate round trip (via `MintGenericJWT`/`JWTValidator`) |
+|---|---|---|---|
+| RS256 | ✅ [internal/rsautil/rs256_util_test.go](internal/rsautil/rs256_util_test.go) | ✅ same file | ✅ [internal/jwt/keys_test.go](internal/jwt/keys_test.go) — `TestMintJWTWithRS256Keys`, `TestMintGenericJWTWithRS256`, `TestRS256KeyStructure`, `TestRS256JWTHeaderValidation` |
+| ECDSA (ES256/ES384/ES512) | ✅ [internal/ecdsa/edcsa_util_test.go](internal/ecdsa/edcsa_util_test.go) (P-256 only) | ✅ same file (via `pascaldekloe/jwt` / `square/go-jose`, not this repo's minter) | ✅ [internal/jwt/keys_test.go](internal/jwt/keys_test.go) — `TestJWTValidator` (ES256) and `TestMintJWTWithECDSAKeys` (ES256/ES384/ES512 table test, fresh keys each run) |
+| Ed25519 (EdDSA) | ✅ [internal/ed25519/ed25519_test.go](internal/ed25519/ed25519_test.go) | ✅ same file (raw `crypto/ed25519` sign/verify) | ✅ [internal/jwt/keys_test.go](internal/jwt/keys_test.go) — `TestMintJWTWithEd25519Keys` |
+
+Also covered: `TestJWTValidatorRejectsWrongKey` proves the validator actually rejects a token signed by a key that isn't in its key set, rather than just parsing the token structure.
+
+Until recently, Ed25519 keys could be generated but not actually used to mint a JWT — `MintGenericJWT`'s signing-method switch had no `EdDSA` case, so it would return `"unsupported signing method: EdDSA"`. That's now fixed in [internal/jwt/mint.go](internal/jwt/mint.go), and `TestMintJWTWithEd25519Keys` is the regression test for it.

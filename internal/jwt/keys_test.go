@@ -1,12 +1,21 @@
 package jwt
 
 import (
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
 	"crypto_gen/internal/jwt/contracts"
+	"encoding/json"
+	"encoding/pem"
 	"strings"
 	"testing"
 	"time"
 
+	jwtminter "github.com/fluffy-bunny/fluffycore/contracts/jwtminter"
 	golang_jwt "github.com/golang-jwt/jwt"
+	jwk "github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/stretchr/testify/require"
 )
 
@@ -93,6 +102,87 @@ func stringPtr(s string) *string {
 }
 func boolPtr(b bool) *bool {
 	return &b
+}
+
+// jwkKeyToSigningKey takes a raw private key (e.g. *ecdsa.PrivateKey or
+// ed25519.PrivateKey), wraps it in a jwx JWK to derive the public/private JWK
+// fields, and packages it up as a *jwtminter.SigningKey the same shape
+// LoadSigningKey would produce from a signing-key JSON document.
+func jwkKeyToSigningKey(t *testing.T, rawPriv interface{}, privPEM []byte, pubPEM []byte, alg string, kid string) *jwtminter.SigningKey {
+	t.Helper()
+
+	privJWKKey, err := jwk.FromRaw(rawPriv)
+	require.NoError(t, err)
+	require.NoError(t, privJWKKey.Set(jwk.KeyIDKey, kid))
+	require.NoError(t, privJWKKey.Set(jwk.AlgorithmKey, alg))
+	require.NoError(t, privJWKKey.Set(jwk.KeyUsageKey, "sig"))
+
+	pubJWKKey, err := jwk.PublicKeyOf(privJWKKey)
+	require.NoError(t, err)
+	require.NoError(t, pubJWKKey.Set(jwk.KeyIDKey, kid))
+	require.NoError(t, pubJWKKey.Set(jwk.AlgorithmKey, alg))
+	require.NoError(t, pubJWKKey.Set(jwk.KeyUsageKey, "sig"))
+
+	privJSON, err := json.Marshal(privJWKKey)
+	require.NoError(t, err)
+	pubJSON, err := json.Marshal(pubJWKKey)
+	require.NoError(t, err)
+
+	var privateJwk jwtminter.PrivateJwk
+	require.NoError(t, json.Unmarshal(privJSON, &privateJwk))
+	var publicJwk jwtminter.PublicJwk
+	require.NoError(t, json.Unmarshal(pubJSON, &publicJwk))
+
+	now := time.Now()
+	return &jwtminter.SigningKey{
+		PrivateKey: string(privPEM),
+		PublicKey:  string(pubPEM),
+		NotBefore:  now,
+		NotAfter:   now.Add(24 * time.Hour),
+		Kid:        kid,
+		PrivateJwk: privateJwk,
+		PublicJwk:  publicJwk,
+	}
+}
+
+// newECSigningKey generates a fresh ECDSA key pair on the given curve and
+// returns it as a *jwtminter.SigningKey for the given ES alg (ES256/384/512).
+func newECSigningKey(t *testing.T, curve elliptic.Curve, alg string) *jwtminter.SigningKey {
+	t.Helper()
+
+	priv, err := ecdsa.GenerateKey(curve, rand.Reader)
+	require.NoError(t, err)
+
+	privDER, err := x509.MarshalECPrivateKey(priv)
+	require.NoError(t, err)
+	privPEM := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: privDER})
+
+	pubDER, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	require.NoError(t, err)
+	pubPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubDER})
+
+	kid := strings.ToLower(alg) + "-test-kid"
+	return jwkKeyToSigningKey(t, priv, privPEM, pubPEM, alg, kid)
+}
+
+// newEd25519SigningKey generates a fresh Ed25519 key pair and returns it as a
+// *jwtminter.SigningKey using the "EdDSA" alg / "OKP" kty, matching the shape
+// produced by internal/ed25519.GenerateED25519KeyPair.
+func newEd25519SigningKey(t *testing.T) *jwtminter.SigningKey {
+	t.Helper()
+
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
+	privDER, err := x509.MarshalPKCS8PrivateKey(priv)
+	require.NoError(t, err)
+	privPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privDER})
+
+	pubDER, err := x509.MarshalPKIXPublicKey(pub)
+	require.NoError(t, err)
+	pubPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubDER})
+
+	return jwkKeyToSigningKey(t, priv, privPEM, pubPEM, "EdDSA", "eddsa-test-kid")
 }
 func TestJWTValidator(t *testing.T) {
 	keys, err := LoadSigningKey([]byte(jsonES256Keys))
@@ -361,4 +451,179 @@ func TestRS256JWTHeaderValidation(t *testing.T) {
 	require.Equal(t, "test-issuer", validatedToken.Issuer())
 	require.Equal(t, "test-subject", validatedToken.Subject())
 	require.Contains(t, validatedToken.Audience(), "test-audience")
+}
+
+// TestMintJWTWithECDSAKeys exercises the full mint -> validate round trip for
+// every ECDSA alg the minter claims to support (ES256, ES384, ES512), each
+// with a freshly generated key, through the same MintGenericJWT/JWTValidator
+// path used in production (as opposed to internal/ecdsa's own tests, which
+// only exercise key generation and sign/verify via pascaldekloe/jwt and
+// square/go-jose, never this package's minter or validator).
+func TestMintJWTWithECDSAKeys(t *testing.T) {
+	testCases := []struct {
+		alg   string
+		curve elliptic.Curve
+	}{
+		{alg: "ES256", curve: elliptic.P256()},
+		{alg: "ES384", curve: elliptic.P384()},
+		{alg: "ES512", curve: elliptic.P521()},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.alg, func(t *testing.T) {
+			signingKey := newECSigningKey(t, tc.curve, tc.alg)
+			require.Equal(t, tc.alg, signingKey.PrivateJwk.Alg)
+			require.Equal(t, "EC", signingKey.PrivateJwk.Kty)
+
+			now := time.Now()
+			standardClaims := &golang_jwt.StandardClaims{
+				IssuedAt:  now.Unix(),
+				NotBefore: now.Unix(),
+				ExpiresAt: now.Add(time.Hour).Unix(),
+				Issuer:    "https://ecdsa-issuer.com",
+				Audience:  "https://ecdsa-audience.com",
+				Subject:   "ecdsa-subject",
+			}
+			extraClaims := contracts.NewClaims()
+			extraClaims.Set("scope", "read write")
+			extraClaims.Set("roles", []string{"admin", "user"})
+
+			token, err := MintStandardJWT(signingKey, standardClaims, extraClaims)
+			require.NoError(t, err)
+			require.NotEmpty(t, token)
+
+			parts := strings.Split(token, ".")
+			require.Len(t, parts, 3, "JWT should have 3 parts separated by dots")
+
+			keySet, err := CreateKeySet([]*jwtminter.SigningKey{signingKey})
+			require.NoError(t, err)
+
+			validator, err := NewJWTValidator(&JWTValidatorOptions{
+				KeySet:            keySet,
+				RequiredIssuer:    stringPtr("https://ecdsa-issuer.com"),
+				ValidateSignature: boolPtr(true),
+				ClockSkewMinutes:  5,
+			})
+			require.NoError(t, err)
+
+			vToken, err := validator.ParseTokenRaw(token)
+			require.NoError(t, err)
+			require.NotNil(t, vToken)
+
+			require.Equal(t, standardClaims.Issuer, vToken.Issuer())
+			require.Equal(t, standardClaims.Subject, vToken.Subject())
+			require.Equal(t, standardClaims.IssuedAt, vToken.IssuedAt().Unix())
+			require.Equal(t, standardClaims.NotBefore, vToken.NotBefore().Unix())
+			require.Equal(t, standardClaims.ExpiresAt, vToken.Expiration().Unix())
+			require.Contains(t, vToken.Audience(), "https://ecdsa-audience.com")
+
+			privateClaims := vToken.PrivateClaims()
+			scope, ok := privateClaims["scope"]
+			require.True(t, ok)
+			require.Equal(t, "read write", scope)
+
+			roles, ok := privateClaims["roles"]
+			require.True(t, ok)
+			roleSlice, ok := roles.([]interface{})
+			require.True(t, ok)
+			require.Contains(t, roleSlice, "admin")
+			require.Contains(t, roleSlice, "user")
+		})
+	}
+}
+
+// TestMintJWTWithEd25519Keys exercises the full mint -> validate round trip
+// for Ed25519 (EdDSA) keys, the same shape produced by
+// internal/ed25519.GenerateED25519KeyPair, through MintGenericJWT/
+// JWTValidator. Previously mint.go's signing-method switch had no "EdDSA"
+// case, so minting a JWT with an Ed25519 key failed with
+// "unsupported signing method: EdDSA" even though key generation worked.
+func TestMintJWTWithEd25519Keys(t *testing.T) {
+	signingKey := newEd25519SigningKey(t)
+	require.Equal(t, "EdDSA", signingKey.PrivateJwk.Alg)
+	require.Equal(t, "OKP", signingKey.PrivateJwk.Kty)
+
+	now := time.Now()
+	standardClaims := &golang_jwt.StandardClaims{
+		IssuedAt:  now.Unix(),
+		NotBefore: now.Unix(),
+		ExpiresAt: now.Add(time.Hour).Unix(),
+		Issuer:    "https://eddsa-issuer.com",
+		Audience:  "https://eddsa-audience.com",
+		Subject:   "eddsa-subject",
+	}
+	extraClaims := contracts.NewClaims()
+	extraClaims.Set("scope", "read write")
+	extraClaims.Set("roles", []string{"admin", "user"})
+
+	token, err := MintStandardJWT(signingKey, standardClaims, extraClaims)
+	require.NoError(t, err)
+	require.NotEmpty(t, token)
+
+	parts := strings.Split(token, ".")
+	require.Len(t, parts, 3, "JWT should have 3 parts separated by dots")
+
+	keySet, err := CreateKeySet([]*jwtminter.SigningKey{signingKey})
+	require.NoError(t, err)
+
+	validator, err := NewJWTValidator(&JWTValidatorOptions{
+		KeySet:            keySet,
+		RequiredIssuer:    stringPtr("https://eddsa-issuer.com"),
+		ValidateSignature: boolPtr(true),
+		ClockSkewMinutes:  5,
+	})
+	require.NoError(t, err)
+
+	vToken, err := validator.ParseTokenRaw(token)
+	require.NoError(t, err)
+	require.NotNil(t, vToken)
+
+	require.Equal(t, standardClaims.Issuer, vToken.Issuer())
+	require.Equal(t, standardClaims.Subject, vToken.Subject())
+	require.Equal(t, standardClaims.IssuedAt, vToken.IssuedAt().Unix())
+	require.Equal(t, standardClaims.NotBefore, vToken.NotBefore().Unix())
+	require.Equal(t, standardClaims.ExpiresAt, vToken.Expiration().Unix())
+	require.Contains(t, vToken.Audience(), "https://eddsa-audience.com")
+
+	privateClaims := vToken.PrivateClaims()
+	scope, ok := privateClaims["scope"]
+	require.True(t, ok)
+	require.Equal(t, "read write", scope)
+
+	roles, ok := privateClaims["roles"]
+	require.True(t, ok)
+	roleSlice, ok := roles.([]interface{})
+	require.True(t, ok)
+	require.Contains(t, roleSlice, "admin")
+	require.Contains(t, roleSlice, "user")
+}
+
+// TestJWTValidatorRejectsWrongKey is a negative-path check that the
+// validator actually verifies the signature rather than just parsing the
+// token: a token signed by one Ed25519 key must fail validation against a
+// key set containing only a different key.
+func TestJWTValidatorRejectsWrongKey(t *testing.T) {
+	signingKey := newEd25519SigningKey(t)
+	otherKey := newEd25519SigningKey(t)
+
+	claims := contracts.NewClaims()
+	claims.Set("iss", "https://eddsa-issuer.com")
+	claims.Set("exp", time.Now().Add(time.Hour).Unix())
+
+	token, err := MintGenericJWT(signingKey, claims)
+	require.NoError(t, err)
+
+	// Build a key set from a *different* key than the one that signed the token.
+	keySet, err := CreateKeySet([]*jwtminter.SigningKey{otherKey})
+	require.NoError(t, err)
+
+	validator, err := NewJWTValidator(&JWTValidatorOptions{
+		KeySet:            keySet,
+		ValidateSignature: boolPtr(true),
+		ClockSkewMinutes:  5,
+	})
+	require.NoError(t, err)
+
+	_, err = validator.ParseTokenRaw(token)
+	require.Error(t, err)
 }

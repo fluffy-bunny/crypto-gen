@@ -68,6 +68,8 @@ func MintGenericJWT(signingKey *jwtminter.SigningKey, claims contracts.IClaims) 
 		method = golang_jwt.SigningMethodES384
 	case "ES512":
 		method = golang_jwt.SigningMethodES512
+	case "EdDSA":
+		method = golang_jwt.SigningMethodEdDSA
 	default:
 		return "", fmt.Errorf("unsupported signing method: %s", signingKey.PrivateJwk.Alg)
 	}
@@ -76,8 +78,16 @@ func MintGenericJWT(signingKey *jwtminter.SigningKey, claims contracts.IClaims) 
 
 	var getKey = func() (interface{}, error) {
 		var key interface{}
-		if strings.HasPrefix(signingKey.PrivateJwk.Alg, "ES") {
+		switch {
+		case strings.HasPrefix(signingKey.PrivateJwk.Alg, "ES"):
 			v, err := golang_jwt.ParseECPrivateKeyFromPEM(signedKey)
+			if err != nil {
+				return "", err
+			}
+			key = v
+			return key, nil
+		case signingKey.PrivateJwk.Alg == "EdDSA":
+			v, err := golang_jwt.ParseEdPrivateKeyFromPEM(signedKey)
 			if err != nil {
 				return "", err
 			}
